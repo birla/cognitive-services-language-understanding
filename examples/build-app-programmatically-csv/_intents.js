@@ -8,7 +8,7 @@ var request = require('requestretry');
 const delayMS = 1000;
 
 // retry recount
-const maxRetry = 5;
+const maxRetry = 10;
 
 // retry request if error or 429 received
 var retryStrategy = function (err, response, body) {
@@ -22,8 +22,8 @@ var addIntents = async (config) => {
     var intentPromises = [];
     config.uri = config.uri.replace("{appId}", config.LUIS_appId).replace("{versionId}", config.LUIS_versionId);
 
-    config.intentList.forEach(function (intent) {
-        config.intentName = intent;
+    for (let i = 0; i < config.intentList.length ; i++ ) {
+        config.intentName = config.intentList[i];
         try {
 
             // JSON for the request body
@@ -48,13 +48,15 @@ var addIntents = async (config) => {
             });
             intentPromises.push(addIntentPromise);
 
-            console.log(`Called addIntents for intent named ${intent}.`);
+            console.log(`Called addIntents for intent named ${config.intentList[i]}.`);
+            await addIntentPromise;
+            console.log(`Completed addIntents for intent named ${config.intentList[i]}.`);
 
         } catch (err) {
             console.log(`Error in addIntents:  ${err.message} `);
 
         }
-    }, this);
+    };
 
     let results = await Promise.all(intentPromises);
     console.log(`Results of all promises = ${JSON.stringify(results)}`);

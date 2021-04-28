@@ -10,7 +10,7 @@ var request = require('requestretry');
 const delayMS = 500;
 
 // retry recount
-const maxRetry = 5;
+const maxRetry = 10;
 
 // retry request if error or 429 received
 var retryStrategy = function (err, response, body) {
@@ -33,7 +33,7 @@ var upload = async (config) => {
         var uploadPromises = [];
 
         // load up promise array
-        pages.forEach(page => {
+        for(let i=0; i<pages.length ; i++) {
             config.uri = "https://westus.api.cognitive.microsoft.com/luis/api/v2.0/apps/{appId}/versions/{versionId}/examples".replace("{appId}", config.LUIS_appId).replace("{versionId}", config.LUIS_versionId)
             var pagePromise = sendBatchToApi({
                 url: config.uri,
@@ -43,14 +43,15 @@ var upload = async (config) => {
                     'Ocp-Apim-Subscription-Key': config.LUIS_subscriptionKey
                 },
                 json: true,
-                body: page,
+                body: pages[i],
                 maxAttempts: maxRetry,
                 retryDelay: delayMS,
                 retryStrategy: retryStrategy
             });
 
             uploadPromises.push(pagePromise);
-        })
+    	    await pagePromise
+        }
 
         //execute promise array
         
